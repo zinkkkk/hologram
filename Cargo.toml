@@ -1,0 +1,36 @@
+[package]
+name = "hologram"
+description = "Interpolation library with support for Radial Basis Function (RBF) and Lagrangian interpolation."
+authors = ["Aleksander Lovric <alexlovric@gmail.com>"]
+version = "0.1.1"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/alexlovric/hologram"
+documentation = "https://docs.rs/hologram"
+readme = "README.md"
+keywords = ["interpolation", "lagrangian", "rbf"]
+categories = ["science", "mathematics", "simulation", "algorithms"]
+
+[lib]
+name = "hologram"
+path = "src/lib.rs"
+test = true
+doctest = false
+
+[dependencies]
+ndarray = { version = "0.15", optional = true }
+ndarray-linalg = { version = "0.16", optional = true }
+
+[features]
+default = []  # Lightweight by default, uses simple linear solver
+
+# Use these features for larger datasets, will be much faster
+openblas = ["dep:ndarray", "dep:ndarray-linalg", "ndarray-linalg/openblas-static"]
+intel-mkl = ["dep:ndarray", "dep:ndarray-linalg", "ndarray-linalg/intel-mkl-static"]
+
+[dev-dependencies]
+approx = "0.5.1"
+
+[lints.clippy]
+doc_overindented_list_items = "allow"
+needless_range_loop = "allow"

@@ -1,5 +1,7 @@
 # Hologram
-Multipurpose interpolation library with support for Radial Basis Function (RBF).
+[![Build & Test](https://github.com/alexlovric/hologram/actions/workflows/build&test.yml/badge.svg?branch=main)](https://github.com/alexlovric/hologram/actions/workflows/build&test.yml)
+
+A flexible interpolation library written in Rust, featuring Radial Basis Function (RBF) interpolation with support for multi-dimensional data.
 
 ## Features
 - RBF interpolation with many kernels to choose from.

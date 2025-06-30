@@ -1,6 +1,6 @@
 [package]
 name = "hologram"
-description = "Interpolation library with support for Radial Basis Function (RBF) and Lagrangian interpolation."
+description = "Interpolation library with multipurpose Radial Basis Function (RBF)."
 authors = ["Aleksander Lovric <alexlovric@gmail.com>"]
 version = "0.1.1"
 edition = "2021"

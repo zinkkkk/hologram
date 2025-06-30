@@ -245,3 +245,21 @@ where
         / predictions.len() as f64;
     mse.sqrt()
 }
+
+/// Generates `n` evenly spaced values between `start` and `end`, inclusive.
+///
+/// This function is equivalent to NumPy's `linspace(start, end, num)`
+/// and is commonly used for sampling a 1D range of values.
+///
+/// # Arguments
+/// * `start` - The starting value of the sequence.
+/// * `end` - The final value of the sequence.
+/// * `n` - The number of values to generate. Must be >= 2.
+///
+/// # Returns
+/// A `Vec<f64>` containing `n` evenly spaced values from `start` to `end`.
+pub fn linspace(start: &f64, end: &f64, n: usize) -> Vec<f64> {
+    assert!(n >= 2, "linspace requires n >= 2");
+    let step = (end - start) / (n - 1) as f64;
+    (0..n).map(|i| start + i as f64 * step).collect()
+}

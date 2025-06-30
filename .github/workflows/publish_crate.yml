@@ -1,4 +1,4 @@
-name: Publish halfway crate
+name: Publish hologram crate
 
 on:
   workflow_dispatch:
@@ -6,11 +6,11 @@ on:
     types: [published]
   push:
     tags:
-      - "halfway-v*"
+      - "hologram-v*"
 
 jobs:
   publish:
-    name: Publish halfway to crates.io
+    name: Publish hologram to crates.io
     runs-on: ubuntu-latest
 
     steps:

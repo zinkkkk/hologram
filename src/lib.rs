@@ -11,9 +11,7 @@ pub mod utilities;
 ///
 /// Supported `X`, `Y` combinations currently:
 /// Rbf: `X` can be: Vec<f64>, [f64;3], f64
-///      `Y` can be: [f64;3], f64
-/// Linear: `X` can be: f64,
-///         `Y` can be: f64
+///      `Y` can be: Vec<f64>, [f64;3], f64
 pub trait Interpolator<X, Y> {
     /// Predict the output `y_new` given points `x_new`.
     ///

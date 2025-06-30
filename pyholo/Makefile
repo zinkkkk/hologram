@@ -53,7 +53,7 @@ bench:
 	cd benches/
 	pytest $(name).py \
 	--benchmark-columns='mean, median, stddev, iqr, outliers, rounds, iterations' \
-	--benchmark-max-time=5 \
+	--benchmark-max-time=10 \
 	--benchmark-min-rounds=10 \
 	# --benchmark-histogram=$(name) \
 	# --benchmark-cprofile='function_name'

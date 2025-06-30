@@ -10,7 +10,7 @@ license = "../LICENSE"
 authors = [
     { name = "Aleksander Lovric", email = "alexlovric@gmail.com" }
 ]
-description = "Python interface for hologram interpolation library, written in rust."
+description = "Multipurpose interpolation library focussing on RBF, written in rust."
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Rust",

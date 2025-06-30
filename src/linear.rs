@@ -1,6 +1,6 @@
 use crate::{utilities::merge_unique_points, Interpolator};
 
-// Currently only 1d
+// Currently only supports x: 1d and y: 1d
 pub struct Linear {
     x: Vec<f64>,
     y: Vec<f64>,

@@ -1,107 +1,136 @@
 import numpy as np
 from scipy.interpolate import Rbf
+from typing import Tuple, Dict, Optional
+
+
+def normalise_data(
+    data: np.ndarray, stats: Optional[Dict[str, np.ndarray]] = None
+) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
+    data = np.asarray(data)
+    if stats is None:
+        mean = np.mean(data, axis=0)
+        std = np.std(data, axis=0) + 1e-10
+        stats = {"mean": mean, "std": std}
+
+    normalised = (data - stats["mean"]) / stats["std"]
+    return normalised, stats
+
+
+def denormalise_data(
+    normalised_data: np.ndarray, stats: Dict[str, np.ndarray]
+) -> np.ndarray:
+    normalised_data = np.asarray(normalised_data)
+    return normalised_data * stats["std"] + stats["mean"]
 
 
 class RBFscipy:
-    def __init__(self, x, y, epsilon=None):
-        self.x = x
-        self.y = y
-        self.epsilon = np.sqrt(epsilon)
-        self.rbf = Rbf(
-            *[x[:, i] for i in range(np.shape(x)[1])],
-            y,
-            epsilon=self.epsilon,
-            function=self.kernel,
-            norm="sqeuclidean",
+    def __init__(self, x, y, kernel_name="gaussian", epsilon=None):
+        self.x = np.asarray(x)
+        self.y = np.asarray(y)
+
+        self.kernel = (
+            self.gaussian_kernel
+            if kernel_name == "gaussian"
+            else self.thin_plate_spline_kernel
         )
-        # Note the euclidean is used because the default gaussian is squaring
+
+        # Ensure x is 2D (samples, features)
+        if self.x.ndim == 1:
+            self.x = self.x.reshape(-1, 1)
+
+        # If y is 1D, reshape to (samples, 1)
+        if self.y.ndim == 1:
+            self.y = self.y.reshape(-1, 1)
+
+        self.epsilon = np.sqrt(epsilon) if epsilon is not None else 1.0
+        self.n_outputs = self.y.shape[1] if self.y.ndim > 1 else 1
+
+        # Create one RBF model per output dimension
+        self.rbfs = []
+        for i in range(self.n_outputs):
+            y_col = self.y[:, i] if self.n_outputs > 1 else self.y.ravel()
+            rbf = Rbf(
+                *[self.x[:, j] for j in range(self.x.shape[1])],
+                y_col,
+                epsilon=self.epsilon,
+                function=self.kernel,
+                norm="sqeuclidean",
+            )
+            self.rbfs.append(rbf)
 
     def predict(self, x_new):
-        return self.rbf(*[x_new[:, i] for i in range(np.shape(x_new)[1])])
+        x_new = np.asarray(x_new)
+        if x_new.ndim == 1:
+            x_new = x_new.reshape(-1, 1)
 
-    def kernel(self, r):
+        # Predict each output dimension separately
+        predictions = []
+        for rbf in self.rbfs:
+            pred = rbf(*[x_new[:, j] for j in range(x_new.shape[1])])
+            predictions.append(pred.reshape(-1, 1))
+
+        # Stack predictions for each output dimension
+        return (
+            np.hstack(predictions) if len(predictions) > 1 else predictions[0].ravel()
+        )
+
+    def gaussian_kernel(self, r):
         r[r < 2.2204460492503131e-12] = 2.2204460492503131e-12
         return np.exp(-0.5 * r / self.epsilon**2)
 
+    def thin_plate_spline_kernel(self, r):
+        # Implementation matching the Rust version
+        r = np.maximum(r, 2.2204460492503131e-12)  # Avoid log(0)
+        return np.where(r > 0, r * np.log(np.sqrt(r)), 0.0)
+
 
 class RBFnumpy:
-    def __init__(self, x, y, sigma=None):
-        self.x = x
-        self.y = y
+    def __init__(self, x, y, kernel_name="gaussian", sigma=None):
+        self.x = np.asarray(x)
+        self.y = np.asarray(y)
+
+        self.kernel = (
+            self.gaussian_kernel
+            if kernel_name == "gaussian"
+            else self.thin_plate_spline_kernel
+        )
+
+        # Ensure x is 2D (samples, features)
+        if self.x.ndim == 1:
+            self.x = self.x.reshape(-1, 1)
+
+        # If y is 1D, reshape to (samples, 1)
+        if self.y.ndim == 1:
+            self.y = self.y.reshape(-1, 1)
+
         self.sigma = sigma
+        self.kernel_name = kernel_name
         self.A = self._rbf_kernel(self.x, self.x)
         self.coef_ = np.linalg.lstsq(self.A, self.y, rcond=None)[0]
 
     def _rbf_kernel(self, X, Y):
         dist = cdist(X, Y, "sqeuclidean")
-        return np.exp(-0.5 * dist / self.sigma**2)
+        return self.kernel(dist)
+
+    def gaussian_kernel(self, r):
+        return np.exp(-0.5 * r / self.sigma**2)
+
+    def thin_plate_spline_kernel(self, r):
+        r = np.sqrt(r + 1e-12)  # Add small constant to avoid log(0)
+        return np.where(r > 0, r * r * np.log(r), 0.0)
 
     def predict(self, x_new):
-        A_new = self._rbf_kernel(x_new, self.x)
-        return np.dot(A_new, self.coef_)
-
-
-class RBFnumpyNormalised:
-    def __init__(self, x, y, sigma=None):
-        # Ensure inputs are numpy arrays
-        self.x_orig = np.asarray(x)
-        self.y_orig = np.asarray(y)
-
-        # Store original shape for output
-        self.output_shape = self.y_orig.shape[1:] if self.y_orig.ndim > 1 else (1,)
-
-        # Normalize input features
-        self.x_mean = np.mean(self.x_orig, axis=0)
-        self.x_std = (
-            np.std(self.x_orig, axis=0) + 1e-10
-        )  # Add small constant to avoid division by zero
-        self.x = (self.x_orig - self.x_mean) / self.x_std
-
-        # Normalize output features
-        self.y_mean = np.mean(self.y_orig, axis=0)
-        self.y_std = np.std(self.y_orig, axis=0) + 1e-10
-        self.y = (self.y_orig - self.y_mean) / self.y_std
-
-        # Set default sigma if not provided
-        if sigma is None:
-            # Heuristic: use average distance between points
-            if len(self.x) > 1:
-                distances = cdist(self.x, self.x, "sqeuclidean")
-                sigma = np.median(distances[~np.eye(len(distances), dtype=bool)])
-            else:
-                sigma = 1.0
-        self.sigma = sigma
-
-        # Compute kernel matrix and solve for coefficients
-        self.A = self._rbf_kernel(self.x, self.x)
-        self.coef_ = np.linalg.lstsq(self.A, self.y, rcond=None)[0]
-
-    def _rbf_kernel(self, X, Y):
-        """Compute the RBF kernel between X and Y"""
-        dist = cdist(X, Y, "sqeuclidean")
-        return np.exp(-0.5 * dist / self.sigma**2)
-
-    def predict(self, x_new):
-        """Predict using the RBF model with denormalization"""
         x_new = np.asarray(x_new)
         if x_new.ndim == 1:
-            x_new = x_new.reshape(1, -1)
-
-        # Normalize input
-        x_norm = (x_new - self.x_mean) / self.x_std
-
-        # Compute predictions in normalized space
-        A_new = self._rbf_kernel(x_norm, self.x)
-        y_pred_norm = np.dot(A_new, self.coef_)
-
-        # Denormalize output
-        y_pred = y_pred_norm * self.y_std + self.y_mean
-
-        # Reshape to match output dimensions
-        if len(self.output_shape) > 1:
-            y_pred = y_pred.reshape(-1, *self.output_shape)
-
-        return y_pred.squeeze()
+            x_new = x_new.reshape(-1, 1)
+            
+        A_new = self._rbf_kernel(x_new, self.x)
+        result = np.dot(A_new, self.coef_)
+        
+        # Match SciPy's behavior: return 1D array for single output, 2D otherwise
+        if result.shape[1] == 1:
+            return result.ravel()
+        return result
 
 
 def cdist(XA, XB, metric="euclidean"):

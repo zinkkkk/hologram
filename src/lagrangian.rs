@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use crate::Interpolator;
 
 /// Represents a Lagrangian interpolator, used to perform polynomial interpolation based on a set of
-/// input and output points.
+/// input and output points. NB: Only supports x: 1d and y: 3d.
 ///
 /// # Fields
 /// * `x`: A vector of input points where interpolation is performed.

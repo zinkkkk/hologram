@@ -1,4 +1,4 @@
-/// Normalises a slice of data by calculating its mean and standard deviation,
+/// Z-score normalises a slice of data by calculating its mean and standard deviation,
 /// then scaling the data to have zero mean and unit variance.
 ///
 /// # Arguments
@@ -6,14 +6,60 @@
 ///
 /// # Returns
 /// A tuple containing:
-/// 1. The mean of the input data
-/// 2. The standard deviation of the input data
-/// 3. The normalised data as a vector
-pub fn normalise_data<T: Normalisable>(data: &[T]) -> (T, T, Vec<T>) {
+/// 1. The normalised data as a vector
+/// 2. The mean of the input data
+/// 3. The standard deviation of the input data
+///
+/// # Example
+/// ```
+/// let data = vec![1.0, 2.0, 3.0, 4.0];
+/// let (normalised, mean, std_dev) = normalise_data(&data);
+/// ```
+pub fn normalise_data<T: Normalisable>(data: &[T]) -> (Vec<T>, T, T) {
     let (mean, std_dev) = T::mean_std(data);
     let normalised_data = T::normalise(data, &mean, &std_dev);
-    (mean, std_dev, normalised_data)
+    (normalised_data, mean, std_dev)
 }
+
+/// Normalises a slice of data using the provided mean and standard deviation.
+///
+/// This performs Z-score normalisation by computing:
+/// `x_normalised = (x - mean) / std_dev`
+///
+/// # Arguments
+/// * `data` - A slice of data points to be normalised.
+/// * `mean` - The mean to use for normalisation.
+/// * `std_dev` - The standard deviation to use for normalisation.
+///
+/// # Returns
+/// A `Vec<T>` containing the normalised data.
+pub fn normalise_data_with<T: Normalisable>(data: &[T], mean: &T, std_dev: &T) -> Vec<T> {
+    T::normalise(data, mean, std_dev)
+}
+
+/// Reverses Z-score normalisation on a slice of normalised data.
+///
+/// This function takes data that has been normalised using the Z-score method:
+/// `x_normalised = (x - mean) / std_dev`, and reconstructs the original values
+/// by computing: `x = x_normalised * std_dev + mean`.
+///
+/// # Arguments
+/// * `data` - A slice of normalised data.
+/// * `mean` - The mean used during normalisation.
+/// * `std_dev` - The standard deviation used during normalisation.
+///
+/// # Returns
+/// A `Vec<T>` containing the denormalised data points.
+///
+/// # Example
+/// ```
+/// let (normalised, mean, std_dev) = normalise_data(&original_data);
+/// let denormalised = denormalise_data(&normalised, &mean, &std_dev);
+/// ```
+pub fn denormalise_data<T: Normalisable>(data: &[T], mean: &T, std_dev: &T) -> Vec<T> {
+    data.iter().map(|x| x.denormalise(mean, std_dev)).collect()
+}
+
 /// A trait for types that can be normalised to have zero mean and unit variance.
 ///
 /// This trait provides methods for calculating statistics and transforming data
@@ -29,8 +75,6 @@ pub trait Normalisable {
         Self: Sized;
 
     fn denormalise(&self, mean: &Self, std_dev: &Self) -> Self;
-
-    fn squared_distance(&self, other: &Self, std_dev: &Self) -> f64;
 }
 
 impl Normalisable for f64 {
@@ -47,10 +91,6 @@ impl Normalisable for f64 {
 
     fn denormalise(&self, mean: &Self, std_dev: &Self) -> Self {
         self * std_dev + mean
-    }
-
-    fn squared_distance(&self, other: &Self, std_dev: &Self) -> f64 {
-        ((self - other) / std_dev).powi(2)
     }
 }
 
@@ -96,13 +136,6 @@ impl Normalisable for [f64; 3] {
         }
         result
     }
-
-    fn squared_distance(&self, other: &Self, std_dev: &Self) -> f64 {
-        let dx = (self[0] - other[0]) / std_dev[0];
-        let dy = (self[1] - other[1]) / std_dev[1];
-        let dz = (self[2] - other[2]) / std_dev[2];
-        dx * dx + dy * dy + dz * dz
-    }
 }
 
 impl Normalisable for Vec<f64> {
@@ -140,13 +173,5 @@ impl Normalisable for Vec<f64> {
             .zip(std_dev.iter())
             .map(|((a, m), s)| a * s + m)
             .collect()
-    }
-
-    fn squared_distance(&self, other: &Self, std_dev: &Self) -> f64 {
-        self.iter()
-            .zip(other.iter())
-            .zip(std_dev.iter())
-            .map(|((a, b), c)| ((a - b) / c).powi(2))
-            .sum()
     }
 }

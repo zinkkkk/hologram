@@ -18,7 +18,7 @@ fn main() -> Result<(), String> {
     // Generate target values using the blackbox function
     let y_train: Vec<f64> = x_train.iter().map(|x| blackbox(*x)).collect();
 
-    let rbf = Rbf::new(x_train.clone(), y_train, Some(gaussian_kernel), Some(1.0))?;
+    let rbf = Rbf::new(x_train, y_train, Some(gaussian_kernel), Some(1.0))?;
 
     // Generate test points
     let n_test = 500;

@@ -168,4 +168,4 @@ Using the hologram linear solver only, as haven't quite figured out how to confi
 <img src="examples/comparison.png" width="99%"/>
 
 ## License
-MIT
+MIT License - See [LICENSE](LICENSE) for details.

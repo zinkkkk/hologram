@@ -1,25 +1,11 @@
-use hologram::{
-    kernels::thin_plate_spline_kernel,
-    numeric::linspace,
-    rbf::Rbf,
-    Interpolator,
-};
 use approx::assert_abs_diff_eq;
+use hologram::{kernels::thin_plate_spline_kernel, numeric::linspace, rbf::Rbf, Interpolator};
 
 fn main() -> Result<(), String> {
     // Training input: Vec<f64>
     let x_train = vec![
-        0.000,
-        512.000,
-        1182.490,
-        1911.273,
-        2788.547,
-        4227.750,
-        6481.706,
-        9609.367,
-        11773.210,
-        13188.649,
-        14400.000,
+        0.000, 512.000, 1182.490, 1911.273, 2788.547, 4227.750, 6481.706, 9609.367, 11773.210,
+        13188.649, 14400.000,
     ];
 
     // Training output: Vec<[f64; 3]>
@@ -41,12 +27,7 @@ fn main() -> Result<(), String> {
     let x_test = linspace(&x_train[0], &x_train.last().unwrap(), 200);
 
     // Create RBF interpolator using thin-plate kernel
-    let rbf = Rbf::new(
-        x_train,
-        y_train,
-        Some(thin_plate_spline_kernel),
-        Some(1.0),
-    )?;
+    let rbf = Rbf::new(x_train, y_train, Some(thin_plate_spline_kernel), Some(1.0))?;
 
     // Predict
     let y_pred = rbf.predict(&x_test)?;

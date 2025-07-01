@@ -18,8 +18,8 @@ test = true
 doctest = false
 
 [dependencies]
-ndarray = { version = "0.15", optional = true }
-ndarray-linalg = { version = "0.16", optional = true }
+ndarray = { version = "0.16", optional = true }
+ndarray-linalg = { version = "0.17", optional = true }
 
 [features]
 default = []  # Lightweight by default, uses simple linear solver

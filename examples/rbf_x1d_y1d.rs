@@ -1,6 +1,6 @@
-use hologram::{Interpolator, kernels::gaussian_kernel, numeric::linspace, rbf::Rbf};
-use std::f64::consts::PI;
 use approx::assert_abs_diff_eq;
+use hologram::{kernels::gaussian_kernel, numeric::linspace, rbf::Rbf, Interpolator};
+use std::f64::consts::PI;
 
 fn blackbox(pt: f64) -> f64 {
     let sum: f64 = pt.powi(2) + 10.0 * (2.0 * PI * pt).cos();

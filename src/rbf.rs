@@ -1,5 +1,9 @@
 use crate::{
-    kernels::gaussian_kernel, linear_algebra::build_design_matrix, normalisation::{denormalise_data, normalise_data, normalise_data_with, Normalisable}, numeric::Numeric, Interpolator
+    kernels::gaussian_kernel,
+    linear_algebra::build_design_matrix,
+    normalisation::{denormalise_data, normalise_data, normalise_data_with, Normalisable},
+    numeric::Numeric,
+    Interpolator,
 };
 
 #[cfg(not(any(feature = "openblas", feature = "intel-mkl")))]
@@ -81,7 +85,7 @@ where
     Y: Numeric,
 {
     fn predict(&self, x_new: &[X]) -> Result<Vec<Y>, String> {
-        let mut result = Y::zeros(x_new.len(), &self.y.first().unwrap());
+        let mut result = Y::zeros(x_new.len(), self.y.first().unwrap());
 
         for (n, x_n) in x_new.iter().enumerate() {
             for (i, x_i) in self.x.iter().enumerate() {
@@ -98,7 +102,6 @@ where
         Ok(result)
     }
 }
-
 
 /// A wrapper around `Rbf` that automatically normalises input and output data using Z-score normalisation.
 #[derive(Debug, Clone)]
@@ -188,13 +191,11 @@ mod tests {
 
     #[test]
     fn test_predict_rbf_x_1d_y_1d() {
-        let rbf =
-            Rbf::<f64, f64>::new(vec![1.0, 2.0, 3.0], vec![5.0, 6.0, 8.0], None, None).unwrap();
+        let rbf = Rbf::new(vec![1.0, 2.0, 3.0], vec![5.0, 6.0, 8.0], None, None).unwrap();
 
         let x_new = vec![2.5, 2.7];
         let prediction = rbf.predict(&x_new).unwrap();
 
-        // Compare the predicted result with the expected result
         assert_abs_diff_eq!(prediction[0], 7.240911017466877, epsilon = 1e-8);
         assert_abs_diff_eq!(prediction[1], 7.680299569616757, epsilon = 1e-8);
     }
@@ -204,7 +205,7 @@ mod tests {
         let x = vec![1.0, 2.0, 3.0];
         let y = vec![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
 
-        let rbf = Rbf::<f64, [f64; 3]>::new(x, y, None, None).unwrap();
+        let rbf = Rbf::new(x, y, None, None).unwrap();
 
         let x_new = vec![1.5, 2.5];
         let predictions = rbf.predict(&x_new).expect("Prediction failed");
@@ -215,5 +216,23 @@ mod tests {
         assert_abs_diff_eq!(predictions[1][0], 6.003611746256762, epsilon = 1e-8);
         assert_abs_diff_eq!(predictions[1][1], 7.020646984384296, epsilon = 1e-8);
         assert_abs_diff_eq!(predictions[1][2], 8.03768222251183, epsilon = 1e-8);
+    }
+
+    #[test]
+    fn test_predict_rbf_x_nd_y_nd() {
+        let x = vec![vec![1.0, 2.0], vec![2.0, 3.0], vec![3.0, 4.0]];
+        let y = vec![vec![1.0, 10.0], vec![2.0, 20.0], vec![3.0, 30.0]];
+
+        let rbf = Rbf::new(x, y, None, None).unwrap();
+
+        let x_new = vec![vec![1.5, 2.5], vec![2.5, 3.5]];
+
+        let predictions = rbf.predict(&x_new).expect("Prediction failed");
+
+        assert_abs_diff_eq!(predictions[0][0], 1.397847988824266, epsilon = 0.1);
+        assert_abs_diff_eq!(predictions[1][0], 2.76977889693662, epsilon = 0.1);
+
+        assert_abs_diff_eq!(predictions[0][1], 13.978479888242664, epsilon = 1.0);
+        assert_abs_diff_eq!(predictions[1][1], 27.697788969366265, epsilon = 1.0);
     }
 }

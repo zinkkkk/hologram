@@ -5,17 +5,32 @@ build-backend = "maturin"
 [project]
 name = "pyholo"
 version = "0.1.5"
-readme = "../README.md"
-license = "../LICENSE"
-authors = [
-    { name = "Aleksander Lovric", email = "alexlovric@gmail.com" }
-]
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Aleksander Lovric", email = "alexlovric@gmail.com" }]
 description = "Multipurpose interpolation library focussing on RBF, written in rust."
 requires-python = ">=3.10"
+keywords = [
+    "interpolation",
+    "rbf",
+    "radial basis function",
+    "scientific computing",
+    "numerical methods",
+    "data science",
+    "machine learning",
+]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
     "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 

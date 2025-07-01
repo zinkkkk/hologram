@@ -1,5 +1,6 @@
 # Hologram
 [![Build & Test](https://github.com/alexlovric/hologram/actions/workflows/build&test.yml/badge.svg?branch=main)](https://github.com/alexlovric/hologram/actions/workflows/build&test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A flexible interpolation library written in Rust, featuring Radial Basis Function (RBF) interpolation with support for multi-dimensional data.
 

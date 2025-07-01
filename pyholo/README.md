@@ -42,7 +42,7 @@ y_pred = pyholo_pred.predict(x_new)
 ```
 
 Plotting against other Rbf implementations (scipy, numpy) and the expected values:
-<img src="benches/example1.png" width="99%"/>
+<img src="https://github.com/alexlovric/hologram/blob/main/examples/example1.png?raw=true" width="99%"/>
 
 ### 3D interpolation of data
 
@@ -80,7 +80,12 @@ y_pred = rbf.predict(x_test)
 ```
 
 Plotting against the training data and expected values:
-<img src="benches/example2.png" width="99%"/>
+<img src="https://github.com/alexlovric/hologram/blob/main/examples/example2.png?raw=true" width="99%"/>
+
+## Comparison with other Rbf implementations
+
+Using the hologram linear solver only, as haven't quite figured out how to configure Openblas or Mkl with Pyo3. Help here is appreciated. Simple 1d problem from before benchmarks quite well.
+<img src="https://github.com/alexlovric/hologram/blob/main/examples/comparison.png?raw=true" width="99%"/>
 
 ## License
 

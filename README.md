@@ -155,15 +155,6 @@ let y_pred = rbf.predict(&x_test)?;
 ```
 
 ## Python implementation
-The python implementation is available in the `pyholo` crate (see Github)
-
-```python
-import pyholo as holo
-
-rbf = holo.Rbf(x_train, y_train, 'thin_plate_spline', 1.0)
-y_pred = rbf.predict(x_test)
-```
-
 Using the hologram linear solver only, as haven't quite figured out how to configure Openblas or Mkl with Pyo3. Help here is appreciated. Simple 1d problem from before benchmarks quite well.
 <img src="examples/comparison.png" width="99%"/>
 

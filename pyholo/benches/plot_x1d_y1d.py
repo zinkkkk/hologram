@@ -27,10 +27,10 @@ pyholo_pred = holo.Rbf(x_train, y_train, "gaussian", 1.0).predict(x_new)
 end_time = time.time()
 print(f"PyHolo time taken: {end_time - start_time}")
 
-# start_time = time.time()
-# numpy_pred = py.RBFnumpy(x_train, y_train, "gaussian", 1.0).predict(x_new)
-# end_time = time.time()
-# print(f"Numpy time taken: {end_time - start_time}")
+start_time = time.time()
+numpy_pred = py.RBFnumpy(x_train, y_train, "gaussian", 1.0).predict(x_new)
+end_time = time.time()
+print(f"Numpy time taken: {end_time - start_time}")
 
 # Create the plot
 plt.figure(figsize=(12, 8))
@@ -43,7 +43,7 @@ plt.plot(x_true, y_true, 'k-', linewidth=2, label='True Function', alpha=0.5)
 # Plot predictions
 plt.plot(x_new, scipy_pred, 'b-.', linewidth=2, label='Scipy RBF')
 plt.plot(x_new, pyholo_pred, 'r--', linewidth=2, label='Hologram RBF')
-# plt.plot(x_new, numpy_pred, 'g-.', linewidth=2, label='Numpy RBF')
+plt.plot(x_new, numpy_pred, 'g-.', linewidth=2, label='Numpy RBF')
 
 # Add training points
 plt.scatter(x_train, y_train, color='black', s=100, zorder=5, 

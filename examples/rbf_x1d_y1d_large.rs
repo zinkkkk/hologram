@@ -13,7 +13,7 @@ fn main() -> Result<(), String> {
 
     // Parameters
     let bounds = (-5.0, 5.0);
-    let n_points = 50;
+    let n_points = 2000;
 
     // Generate training points
     let x_train: Vec<f64> = linspace(&bounds.0, &bounds.1, n_points);
@@ -24,7 +24,7 @@ fn main() -> Result<(), String> {
     let rbf = Rbf::new(x_train, y_train, Some(gaussian_kernel), Some(1.0))?;
 
     // Generate test points
-    let n_test = 200;
+    let n_test = 1000;
     let x_test: Vec<f64> = linspace(&bounds.0, &bounds.1, n_test);
 
     // Make predictions
@@ -35,7 +35,7 @@ fn main() -> Result<(), String> {
     let elapsed = start_time.elapsed();
     println!("Execution time: {:.2?}", elapsed);
 
-    assert_abs_diff_eq!(y_pred[1], 44.017508031015495, epsilon = 1e-6);
+    assert_abs_diff_eq!(y_pred[1], 44.85706302848141, epsilon = 1e-6);
 
     Ok(())
 }

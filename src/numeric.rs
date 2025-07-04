@@ -1,11 +1,11 @@
-use std::fmt::Debug;
+use std::{borrow::Borrow, fmt::Debug};
 
 /// A trait for numeric types that can be used with the RBF interpolator.
 ///
 /// This trait defines the basic arithmetic operations required for RBF interpolation,
 /// along with type conversion and utility methods. Implementations are provided
 /// for common numeric types like `f64`, `[f64; 3]`, and `Vec<f64>`.
-pub trait Numeric: Default + Debug {
+pub trait Numeric: Default + Debug + Clone {
     fn is_instance_nan(&self) -> bool;
     fn zero(shape: &Self) -> Self;
     fn zeros(length: usize, shape: &Self) -> Vec<Self>;
@@ -16,7 +16,8 @@ pub trait Numeric: Default + Debug {
     fn divide_scalar(&self, scalar: f64) -> Self;
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = Self>;
+        I: Iterator,
+        I::Item: Borrow<Self>;
 
     #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
     fn to_flattened(&self) -> Vec<f64>;
@@ -62,9 +63,10 @@ impl Numeric for f64 {
 
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = Self>,
+        I: Iterator,
+        I::Item: Borrow<Self>,
     {
-        iter.sum()
+        iter.map(|x| *x.borrow()).sum()
     }
 
     #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
@@ -133,10 +135,12 @@ impl Numeric for [f64; 3] {
 
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = Self>,
+        I: Iterator,
+        I::Item: Borrow<Self>,
     {
         let mut result = [0.0; 3];
         for item in iter {
+            let item = item.borrow();
             for i in 0..3 {
                 result[i] += item[i];
             }
@@ -199,18 +203,24 @@ impl Numeric for Vec<f64> {
 
     fn sum<I>(mut iter: I) -> Self
     where
-        I: Iterator<Item = Self>,
+        I: Iterator,
+        I::Item: Borrow<Self>,
     {
         let first_item = iter.next().expect("Iterator should not be empty");
+        let first_item = first_item.borrow();
+
         let mut result = vec![0.0; first_item.len()];
         for (i, val) in first_item.iter().enumerate() {
             result[i] = *val;
         }
+
         for item in iter {
+            let item = item.borrow();
             for (i, val) in item.iter().enumerate() {
                 result[i] += val;
             }
         }
+
         result
     }
 

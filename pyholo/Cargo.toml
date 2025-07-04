@@ -1,17 +1,17 @@
 [package]
 name = "pyholo"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 description = "Python interface for hologram interpolation library, written in rust."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "pyholo"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 test = true
 doctest = false
 
 [dependencies]
 pyo3 = { version = "0.21.0", features = ["abi3-py38"] }
 
-hologram = { path = "../" }
+hologram = { path = "../", features = ["rayon"] }

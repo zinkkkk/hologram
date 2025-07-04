@@ -1,9 +1,9 @@
 import sys
 
 # Add the parent directory to sys.path to find the dependencies module for pytest
-sys.path.insert(0, "../.venv/lib/python3.12/site-packages/pyholo/")
-sys.path.insert(0, "../.venv/lib/python3.12/site-packages/")
-sys.path.insert(0, ".")
+# sys.path.insert(0, "../.venv/lib/python3.10/site-packages/pyholo/")
+# sys.path.insert(0, "../.venv/lib/python3.10/site-packages/")
+# sys.path.insert(0, ".")
 
 import numpy as np
 import dependencies.interpolators as py

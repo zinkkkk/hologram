@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pyholo"
-version = "0.1.6"
+version = "0.1.7"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Aleksander Lovric", email = "alexlovric@gmail.com" }]
@@ -35,4 +35,5 @@ classifiers = [
 
 
 [tool.maturin]
+profile = "release"
 features = ["pyo3/extension-module"]

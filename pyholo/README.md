@@ -87,6 +87,35 @@ Plotting against the training data and expected values:
 Using the hologram linear solver only, as haven't quite figured out how to configure Openblas or Mkl with Pyo3. Help here is appreciated. Simple 1d problem from before benchmarks quite well.
 <img src="https://github.com/alexlovric/hologram/blob/main/examples/comparison.png?raw=true" width="99%"/>
 
+
+## Build python from source
+These instructions assume that Python3 and Cargo are installed on your system. To set up this project, follow these steps:
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/alexlovric/gmac.git
+    cd gmac/gmac_py
+    ```
+2. Create a virtual environment and install build system:
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate # In windows /Scripts/activate
+    python3 -m pip install -r requirements.txt
+    ```
+3. Build the release binary:
+    ```bash
+    maturin develop --release
+    ```
+4. Build the python wheel:
+    ```bash
+    maturin build --release
+    ```
+5. Running benchmarks/examples:
+    ```bash
+    python3 -m pip install <path to wheel (target/wheels/*.whl)>
+    cd benches
+    python3 -m pip install -r requirements.txt
+    ```
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.

@@ -16,12 +16,23 @@ A flexible interpolation library written in Rust, featuring Radial Basis Functio
 - Lagrangian interpolation with support for Chebyshev nodes (X: `Vec<f64>` and Y: `Vec<[f64; 3]>` only)
 
 ## Add to your project
-Add the following to your `Cargo.toml` (remove `features` for lightweight option):
+Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-hologram = { version = "0.1.0", features = ["openblas"]} # or "intel-mkl"
+hologram = { version = "0.1.3" } # includes rayon
 ```
+
+If this is still not enough, try using `openblas` or `intel-mkl` features.
+
+```toml
+[dependencies]
+hologram = { version = "0.1.3", features = ["openblas"]} # or "intel-mkl"
+```
+
+Make sure you have the required dependencies installed for the features you choose. For openblas openssl is required.
+
+For lightweight dependency-free option run `cargo build --no-default-features`.
 
 ## Examples in Rust
 ### Interpolating 1D data

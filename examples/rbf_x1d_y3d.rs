@@ -1,7 +1,10 @@
 use approx::assert_abs_diff_eq;
 use hologram::{kernels::thin_plate_spline_kernel, numeric::linspace, rbf::Rbf, Interpolator};
+use std::time::Instant;
 
 fn main() -> Result<(), String> {
+    let start_time = Instant::now();
+
     // Training input: Vec<f64>
     let x_train = vec![
         0.000, 512.000, 1182.490, 1911.273, 2788.547, 4227.750, 6481.706, 9609.367, 11773.210,
@@ -39,6 +42,9 @@ fn main() -> Result<(), String> {
     for (a, e) in actual.iter().zip(expected.iter()) {
         assert_abs_diff_eq!(a, e, epsilon = 1e-6);
     }
+
+    let elapsed = start_time.elapsed();
+    println!("Execution time: {:.2?}", elapsed);
 
     Ok(())
 }

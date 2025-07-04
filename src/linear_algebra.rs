@@ -1,10 +1,22 @@
 use crate::numeric::Numeric;
 
+#[cfg(feature = "rayon")]
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+
 #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
 use ndarray::{Array1, Array2};
 #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
 use ndarray_linalg::Solve;
 
+/// Solves a linear system Ax = b using LU decomposition.
+///
+/// # Arguments
+/// * `mat` - The coefficient matrix A as a 2D vector of f64 values.
+/// * `rhs` - The right-hand side vector b with elements of any numeric type T.
+///
+/// # Returns
+/// * `Ok(Vec<T>)` - The solution vector x if successful.
+/// * `Err(String)` - An error message if the system cannot be solved.
 pub fn lu_linear_solver<T>(mat: &[Vec<f64>], rhs: &[T]) -> Result<Vec<T>, String>
 where
     T: Numeric,
@@ -17,7 +29,11 @@ where
         ));
     }
 
-    let (lu, p) = lu_decomposition(mat)?;
+    // Perform LU decomposition
+    let (lu, p) = match lu_decomposition(mat) {
+        LuDecompResult::Success { lu, p } => (lu, p),
+        LuDecompResult::Failure(err) => return Err(err),
+    };
 
     // Forward substitution: Solve Ly = Pb
     let mut y = T::zeros(mat_rows, &rhs[p[0]]);
@@ -47,6 +63,11 @@ where
     Ok(x)
 }
 
+pub enum LuDecompResult {
+    Success { lu: Vec<Vec<f64>>, p: Vec<usize> },
+    Failure(String),
+}
+
 /// Performs LU decomposition with partial pivoting on a given square matrix.
 /// The function decomposes a square matrix `mat` into its lower triangular
 /// (L) and upper triangular (U) components, along with a permutation vector `p`
@@ -54,6 +75,7 @@ where
 ///
 /// # Arguments
 /// * `mat` - A reference to a square matrix.
+/// * `pivot_epsilon` - A threshold for detecting zero pivot in LU decomposition.
 ///
 /// # Returns
 /// A tuple of `lu` and `p` as `Ok((lu, p))`
@@ -62,34 +84,86 @@ where
 /// - `p` is a permutation vector, representing the row swaps applied to `mat`.
 ///
 /// Or an `Err(String)` if the decomposition fails, such as encountering a zero pivot.
-pub fn lu_decomposition(mat: &[Vec<f64>]) -> Result<(Vec<Vec<f64>>, Vec<usize>), String> {
+pub fn lu_decomposition(mat: &[Vec<f64>]) -> LuDecompResult {
+    let n = mat.len();
     let mut lu = mat.to_vec();
-    let mut p = (0..mat.len()).collect::<Vec<usize>>();
+    let mut p = (0..n).collect::<Vec<usize>>();
 
-    for k in 0..mat.len() - 1 {
+    #[cfg(feature = "rayon")]
+    let parallel_threshold = 100;
+
+    for k in 0..n - 1 {
+        // Pivot selection (sequential)
         let mut max_row = k;
-        for i in k + 1..mat.len() {
+        for i in k + 1..n {
             if lu[i][k].abs() > lu[max_row][k].abs() {
                 max_row = i;
             }
         }
+
         if lu[max_row][k] == 0.0 {
-            return Err(String::from("Zero obtained in LU[max_row][k]!"));
+            return LuDecompResult::Failure(format!(
+                "Exact zero pivot encountered at column {}",
+                k
+            ));
         }
+
         if max_row != k {
             lu.swap(k, max_row);
             p.swap(k, max_row);
         }
-        for i in k + 1..mat.len() {
-            let factor = lu[i][k] / lu[k][k];
-            lu[i][k] = factor;
-            for j in k + 1..mat.len() {
-                lu[i][j] -= factor * lu[k][j];
+
+        let pivot = lu[k][k];
+
+        // Split safely to avoid borrow conflicts
+        let (head, tail) = lu.split_at_mut(k + 1);
+        let pivot_row = &head[k];
+
+        #[cfg(feature = "rayon")]
+        {
+            if n - k - 1 > parallel_threshold {
+                tail.par_iter_mut().for_each(|row| {
+                    update_row(row, pivot_row, k, pivot);
+                });
+                continue;
             }
+        }
+
+        // Sequential fallback
+        for row in tail.iter_mut() {
+            update_row(row, pivot_row, k, pivot);
         }
     }
 
-    Ok((lu, p))
+    LuDecompResult::Success { lu, p }
+}
+
+fn update_row(row: &mut [f64], upper_row_k: &[f64], k: usize, pivot: f64) {
+    let factor = row[k] / pivot;
+    row[k] = factor;
+    let row_tail = &mut row[(k + 1)..];
+    let lu_k_row_tail = &upper_row_k[(k + 1)..];
+    for (j, &lu_kj) in lu_k_row_tail.iter().enumerate() {
+        row_tail[j] -= factor * lu_kj;
+    }
+}
+
+/// Computes the Frobenius norm of a square or rectangular matrix.
+///
+/// The Frobenius norm is the square root of the sum of the squares of all elements in the matrix.
+/// It measures the overall magnitude or "size" of the matrix.
+///
+/// # Arguments
+/// * `mat` - The input matrix as a slice of rows, each row a Vec<f64>.
+///
+/// # Returns
+/// The Frobenius norm as an f64 scalar.
+pub fn matrix_frobenius_norm(mat: &[Vec<f64>]) -> f64 {
+    mat.iter()
+        .flat_map(|row| row.iter())
+        .map(|&v| v * v)
+        .sum::<f64>()
+        .sqrt()
 }
 
 /// Builds a design matrix based on two sets of input vectors and a kernel function.
@@ -123,57 +197,19 @@ where
         .collect::<Vec<Vec<f64>>>()
 }
 
-pub fn compute_determinant(mat: &[Vec<f64>]) -> f64 {
-    let n = mat.len();
-
-    if mat.iter().any(|row| row.len() != n) {
-        panic!("Matrix must be square to compute determinant!");
-    }
-
-    // Perform LU decomposition
-    let (lu, p) = match lu_decomposition(mat) {
-        Ok((lu, p)) => (lu, p),
-        Err(_) => return 0.0, // If decomposition fails, assume singular matrix
-    };
-
-    // Determinant is product of diagonal elements of U
-    let mut det = 1.0;
-    for i in 0..n {
-        det *= lu[i][i]; // Product of diagonal elements
-    }
-
-    // Adjust sign based on number of row swaps in permutation vector `p`
-    let num_swaps = permutation_parity(&p);
-    if num_swaps % 2 != 0 {
-        det = -det;
-    }
-
-    det
-}
-
-// Helper function to determine permutation parity (odd or even swaps)
-fn permutation_parity(p: &[usize]) -> usize {
-    let mut visited = vec![false; p.len()];
-    let mut swaps = 0;
-
-    for i in 0..p.len() {
-        if visited[i] {
-            continue;
-        }
-
-        let mut j = i;
-        while !visited[j] {
-            visited[j] = true;
-            j = p[j];
-            if j != i {
-                swaps += 1;
-            }
-        }
-    }
-
-    swaps
-}
-
+/// Solves a linear system using external BLAS/LAPACK implementations.
+///
+/// This function is only available when either the "openblas" or "intel-mkl"
+/// feature is enabled. It provides better performance for large matrices
+/// by leveraging optimized linear algebra libraries.
+///
+/// # Arguments
+/// * `design_matrix` - The coefficient matrix A as a 2D vector of f64 values.
+/// * `rhs` - The right-hand side vector with elements of any numeric type T.
+///
+/// # Returns
+/// * `Ok(Vec<T>)` - The solution vector x if successful.
+/// * `Err(String)` - An error message if the system cannot be solved.
 #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
 pub fn ndarray_linear_solver<T: Numeric>(
     design_matrix: &[Vec<f64>],

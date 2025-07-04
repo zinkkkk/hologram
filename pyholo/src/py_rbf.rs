@@ -28,6 +28,7 @@ pub struct PyRbf {
 impl PyRbf {
     #[new]
     pub fn new(
+        py: Python<'_>,
         x: &Bound<'_, PyAny>,
         y: &Bound<'_, PyAny>,
         kernel_name: Option<&str>,
@@ -48,9 +49,13 @@ impl PyRbf {
         macro_rules! try_rbf {
             ($x_ty:ty, $y_ty:ty, $variant:path) => {
                 if let (Ok(x), Ok(y)) = (x.extract::<$x_ty>(), y.extract::<$y_ty>()) {
-                    return Rbf::new(x, y, kernel, Some(epsilon))
-                        .map($variant)
-                        .map(|inner| PyRbf { inner })
+                    // Release GIL during the RBF construction / solving
+                    return py
+                        .allow_threads(move || {
+                            Rbf::new(x, y, kernel, Some(epsilon))
+                                .map($variant)
+                                .map(|inner| PyRbf { inner })
+                        })
                         .map_err(PyValueError::new_err);
                 }
             };

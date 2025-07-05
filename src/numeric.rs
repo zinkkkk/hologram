@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, fmt::Debug};
+use std::fmt::Debug;
 
 /// A trait for numeric types that can be used with the RBF interpolator.
 ///
@@ -13,10 +13,6 @@ pub trait Numeric: Default + Debug + Clone {
     fn add_assign(&mut self, other: &Self);
     fn subtract(&self, other: &Self) -> Self;
     fn divide_scalar(&self, scalar: f64) -> Self;
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator,
-        I::Item: Borrow<Self>;
 
     #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
     fn to_flattened(&self) -> Vec<f64>;
@@ -54,14 +50,6 @@ impl Numeric for f64 {
 
     fn divide_scalar(&self, scalar: f64) -> Self {
         self / scalar
-    }
-
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator,
-        I::Item: Borrow<Self>,
-    {
-        iter.map(|x| *x.borrow()).sum()
     }
 
     #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
@@ -124,21 +112,6 @@ impl Numeric for [f64; 3] {
         result
     }
 
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator,
-        I::Item: Borrow<Self>,
-    {
-        let mut result = [0.0; 3];
-        for item in iter {
-            let item = item.borrow();
-            for i in 0..3 {
-                result[i] += item[i];
-            }
-        }
-        result
-    }
-
     #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
     fn to_flattened(&self) -> Vec<f64> {
         self.to_vec()
@@ -185,29 +158,6 @@ impl Numeric for Vec<f64> {
 
     fn divide_scalar(&self, scalar: f64) -> Self {
         self.iter().map(|&x| x / scalar).collect()
-    }
-
-    fn sum<I>(mut iter: I) -> Self
-    where
-        I: Iterator,
-        I::Item: Borrow<Self>,
-    {
-        let first_item = iter.next().expect("Iterator should not be empty");
-        let first_item = first_item.borrow();
-
-        let mut result = vec![0.0; first_item.len()];
-        for (i, val) in first_item.iter().enumerate() {
-            result[i] = *val;
-        }
-
-        for item in iter {
-            let item = item.borrow();
-            for (i, val) in item.iter().enumerate() {
-                result[i] += val;
-            }
-        }
-
-        result
     }
 
     #[cfg(any(feature = "openblas", feature = "intel-mkl"))]

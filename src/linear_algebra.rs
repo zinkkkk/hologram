@@ -42,7 +42,7 @@ where
     let cond_est = max_row_sum * max_col_sum;
 
     if cond_est <= 1e5 {
-        // Good conditioning — skip normalisation
+        // Good conditioning — skip normalization
         return lu_linear_solver_raw(mat, rhs);
     }
 
@@ -60,7 +60,7 @@ where
         scaled_rhs.push(rhs[i].divide_scalar(norm));
     }
 
-    // Solve normalised system
+    // Solve normalized system
     lu_linear_solver_raw(&norm_mat, &scaled_rhs)
 }
 
@@ -75,7 +75,7 @@ where
         LuDecompResult::Failure(err) => return Err(err),
     };
 
-    // --- Forward substitution: L * y = P * b ---
+    // Forward substitution
     let mut y: Vec<T> = Vec::with_capacity(n);
     for i in 0..n {
         let mut sum = T::zero(&rhs[0]);
@@ -85,7 +85,7 @@ where
         y.push(rhs[p[i]].subtract(&sum));
     }
 
-    // --- Backward substitution: U * x = y ---
+    // Backward substitution
     let mut x = vec![T::zero(&y[0]); n];
     for i in (0..n).rev() {
         let mut sum = T::zero(&y[0]);

@@ -21,36 +21,79 @@ pub fn lu_linear_solver<T>(mat: &[Vec<f64>], rhs: &[T]) -> Result<Vec<T>, String
 where
     T: Numeric,
 {
-    let mat_rows = mat.len();
-
-    if mat_rows != rhs.len() {
-        return Err(String::from(
-            "Incompatible design matrix and right-hand side sizes!",
-        ));
+    let n = mat.len();
+    if n == 0 || n != rhs.len() {
+        return Err("Design matrix and RHS must be non-empty and the same length.".to_string());
     }
 
-    // Perform LU decomposition
+    // Estimate condition number using row and column sums
+    let mut max_row_sum: f64 = 0.0;
+    let mut max_col_sum = vec![0.0; mat[0].len()];
+
+    for row in mat {
+        let row_sum: f64 = row.iter().map(|x| x.abs()).sum();
+        max_row_sum = max_row_sum.max(row_sum);
+        for (j, val) in row.iter().enumerate() {
+            max_col_sum[j] += val.abs();
+        }
+    }
+
+    let max_col_sum = max_col_sum.into_iter().fold(0.0, f64::max);
+    let cond_est = max_row_sum * max_col_sum;
+
+    if cond_est <= 1e5 {
+        // Good conditioning — skip normalisation
+        return lu_linear_solver_raw(mat, rhs);
+    }
+
+    // Normalise matrix rows and RHS
+    let mut norm_mat = Vec::with_capacity(n);
+    let mut scaled_rhs = Vec::with_capacity(n);
+
+    for (i, row) in mat.iter().enumerate() {
+        let norm = row.iter().map(|x| x.abs()).sum::<f64>().max(f64::EPSILON);
+        let mut row_out = Vec::with_capacity(row.len());
+        for &x in row {
+            row_out.push(x / norm);
+        }
+        norm_mat.push(row_out);
+        scaled_rhs.push(rhs[i].divide_scalar(norm));
+    }
+
+    // Solve normalised system
+    lu_linear_solver_raw(&norm_mat, &scaled_rhs)
+}
+
+pub fn lu_linear_solver_raw<T>(mat: &[Vec<f64>], rhs: &[T]) -> Result<Vec<T>, String>
+where
+    T: Numeric,
+{
+    let n = mat.len();
+
     let (lu, p) = match lu_decomposition(mat) {
         LuDecompResult::Success { lu, p } => (lu, p),
         LuDecompResult::Failure(err) => return Err(err),
     };
 
-    // Forward substitution: Solve Ly = Pb
-    let mut y = T::zeros(mat_rows, &rhs[p[0]]);
-    y[0] = rhs[p[0]].subtract(&T::zero(&rhs[p[0]]));
-
-    for i in 1..mat_rows {
-        let sum = T::sum((0..i).map(|j| y[j].multiply_scalar(lu[i][j])));
-        y[i] = rhs[p[i]].subtract(&sum);
+    // --- Forward substitution: L * y = P * b ---
+    let mut y: Vec<T> = Vec::with_capacity(n);
+    for i in 0..n {
+        let mut sum = T::zero(&rhs[0]);
+        for j in 0..i {
+            sum.add_assign(&y[j].multiply_scalar(lu[i][j]));
+        }
+        y.push(rhs[p[i]].subtract(&sum));
     }
 
-    // Backward substitution: Solve Ux = y
-    let mut x = T::zeros(mat_rows, &y[mat_rows - 1]);
-    x[mat_rows - 1] = y[mat_rows - 1].divide_scalar(lu[mat_rows - 1][mat_rows - 1]);
-
-    for i in (0..mat_rows - 1).rev() {
-        let sum = T::sum((i + 1..mat_rows).map(|j| x[j].multiply_scalar(lu[i][j])));
-        x[i] = y[i].subtract(&sum).divide_scalar(lu[i][i]);
+    // --- Backward substitution: U * x = y ---
+    let mut x = vec![T::zero(&y[0]); n];
+    for i in (0..n).rev() {
+        let mut sum = T::zero(&y[0]);
+        for j in i + 1..n {
+            sum.add_assign(&x[j].multiply_scalar(lu[i][j]));
+        }
+        let denom = lu[i][i];
+        x[i] = y[i].subtract(&sum).divide_scalar(denom);
 
         if x[i].is_instance_nan() {
             return Err(format!(
@@ -63,6 +106,9 @@ where
     Ok(x)
 }
 
+/// Result of an LU decomposition.
+///
+/// This enum represents the outcome of performing LU decomposition on a matrix.
 pub enum LuDecompResult {
     Success { lu: Vec<Vec<f64>>, p: Vec<usize> },
     Failure(String),

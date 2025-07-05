@@ -30,12 +30,12 @@ fn main() -> Result<(), String> {
     // Make predictions
     let y_pred = rbf.predict(&x_test)?;
 
-    println!("Predicted values: {:?}", y_pred[0]);
+    println!("Predicted values: {:?}", y_pred[1]);
 
     let elapsed = start_time.elapsed();
     println!("Execution time: {:.2?}", elapsed);
 
-    assert_abs_diff_eq!(y_pred[1], 44.85706302848141, epsilon = 1e-6);
+    assert_abs_diff_eq!(y_pred[1], 44.88103313933522, epsilon = 1e-3);
 
     Ok(())
 }

@@ -12,7 +12,7 @@ import pyholo as holo
 
 dimension = 1
 bounds = (-5.0, 5.0)
-n_train = 1000
+n_train = 50
 n_test = 5
 
 
@@ -37,19 +37,16 @@ x_new = np.array(
 def pyholo_rbf_model(training_data, new_data):
     newrbf = holo.Rbf(training_data[0], training_data[1], "gaussian", 1.0)
     pred1 = newrbf.predict(new_data)
-    # print(np.array(pred1))
 
 
 def scipy_model(training_data, new_data):
     newrbf = py.RBFscipy(training_data[0], training_data[1], "gaussian", 1.0)
     pred1 = newrbf.predict(new_data)
-    # print(pred1)
 
 
 def numpy_model(training_data, new_data):
     newrbf = py.RBFnumpy(training_data[0], training_data[1], "gaussian", 1.0)
     pred1 = newrbf.predict(new_data)
-    # print(pred1)
 
 
 def test_pyholo(benchmark):
@@ -62,7 +59,3 @@ def test_scipy(benchmark):
 
 # def test_numpy(benchmark):
 #     benchmark(numpy_model, training_data, x_new)
-
-
-# pyholo_rbf_model(training_data, x_new)
-# scipy_model(training_data, x_new)

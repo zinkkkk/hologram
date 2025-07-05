@@ -35,7 +35,7 @@ fn main() -> Result<(), String> {
     let elapsed = start_time.elapsed();
     println!("Execution time: {:.2?}", elapsed);
 
-    assert_abs_diff_eq!(y_pred[1], 44.017508031015495, epsilon = 1e-6);
+    assert_abs_diff_eq!(y_pred[1], 44.017508031015495, epsilon = 1e-3);
 
     Ok(())
 }

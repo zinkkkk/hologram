@@ -6,6 +6,10 @@ if hasattr(pyholo, "__all__"):
 
 
 def _flatten_if_singleton_2d(array):
+    # Convert NumPy arrays to native lists, if applicable
+    if hasattr(array, "tolist") and callable(array.tolist):
+        array = array.tolist()
+
     if (
         isinstance(array, list)
         and len(array) > 0
@@ -13,6 +17,7 @@ def _flatten_if_singleton_2d(array):
         and all(isinstance(sub, list) and len(sub) == 1 for sub in array)
     ):
         return [sub[0] for sub in array]
+    
     return array
 
 

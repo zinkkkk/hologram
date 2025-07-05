@@ -70,12 +70,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let idx = y_pred.len() - 10;
     println!("Some predicted value: {:?}", y_pred[idx]);
 
-    // let expected = [41364.47758769989, 7355.71618270874, 1643.687355041504];
-    // let actual = y_pred[idx];
-    // for (a, e) in actual.iter().zip(expected.iter()) {
-    //     assert_abs_diff_eq!(a, e, epsilon = 1e-6);
-    // }
-
     let elapsed = start_time.elapsed();
     println!("Execution time: {:.2?}", elapsed);
 

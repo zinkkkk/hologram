@@ -8,7 +8,6 @@ use std::{borrow::Borrow, fmt::Debug};
 pub trait Numeric: Default + Debug + Clone {
     fn is_instance_nan(&self) -> bool;
     fn zero(shape: &Self) -> Self;
-    fn zeros(length: usize, shape: &Self) -> Vec<Self>;
     fn squared_distance(&self, other: &Self) -> f64;
     fn multiply_scalar(&self, scalar: f64) -> Self;
     fn add_assign(&mut self, other: &Self);
@@ -35,10 +34,6 @@ impl Numeric for f64 {
 
     fn zero(_shape: &Self) -> Self {
         0.
-    }
-
-    fn zeros(length: usize, _shape: &Self) -> Vec<Self> {
-        vec![Self::zero(_shape); length]
     }
 
     fn squared_distance(&self, other: &Self) -> f64 {
@@ -90,10 +85,6 @@ impl Numeric for [f64; 3] {
 
     fn zero(_shape: &Self) -> Self {
         [0.0; 3]
-    }
-
-    fn zeros(length: usize, _shape: &Self) -> Vec<Self> {
-        vec![Self::zero(_shape); length]
     }
 
     fn squared_distance(&self, other: &Self) -> f64 {
@@ -169,11 +160,6 @@ impl Numeric for Vec<f64> {
 
     fn zero(shape: &Self) -> Self {
         vec![0.0; shape.len()]
-    }
-
-    fn zeros(length: usize, shape: &Self) -> Vec<Self> {
-        let dim = shape.len();
-        vec![vec![0.0; dim]; length]
     }
 
     fn squared_distance(&self, other: &Self) -> f64 {

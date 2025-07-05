@@ -85,7 +85,8 @@ where
     Y: Numeric,
 {
     fn predict(&self, x_new: &[X]) -> Result<Vec<Y>, String> {
-        let mut result = Y::zeros(x_new.len(), self.y.first().unwrap());
+        let zero = Y::zero(&self.y.first().unwrap());
+        let mut result = vec![zero; x_new.len()];
 
         for (n, x_n) in x_new.iter().enumerate() {
             for (i, x_i) in self.x.iter().enumerate() {

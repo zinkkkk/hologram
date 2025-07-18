@@ -14,10 +14,10 @@ pub trait Numeric: Default + Debug + Clone {
     fn subtract(&self, other: &Self) -> Self;
     fn divide_scalar(&self, scalar: f64) -> Self;
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn to_flattened(&self) -> Vec<f64>;
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn from_flattened(flattened: Vec<f64>) -> Result<Self, String>
     where
         Self: Sized;
@@ -52,12 +52,12 @@ impl Numeric for f64 {
         self / scalar
     }
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn to_flattened(&self) -> Vec<f64> {
         vec![*self]
     }
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn from_flattened(mut flattened: Vec<f64>) -> Result<Self, String> {
         if flattened.len() != 1 {
             return Err("Expected exactly one element for f64".to_string());
@@ -112,12 +112,12 @@ impl Numeric for [f64; 3] {
         result
     }
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn to_flattened(&self) -> Vec<f64> {
         self.to_vec()
     }
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn from_flattened(flattened: Vec<f64>) -> Result<Self, String> {
         if flattened.len() != 3 {
             return Err("Expected exactly 3 elements for [f64; 3]".to_string());
@@ -160,12 +160,12 @@ impl Numeric for Vec<f64> {
         self.iter().map(|&x| x / scalar).collect()
     }
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn to_flattened(&self) -> Vec<f64> {
         self.clone()
     }
 
-    #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
+    #[cfg(any(feature = "openblas", feature = "intel-mkl", feature = "faer"))]
     fn from_flattened(flattened: Vec<f64>) -> Result<Self, String> {
         Ok(flattened)
     }

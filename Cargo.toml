@@ -3,7 +3,7 @@ name = "hologram"
 description = "Interpolation library with multipurpose Radial Basis Function (RBF)."
 authors = ["Aleksander Lovric <alexlovric@gmail.com>"]
 version = "0.1.4"
-edition = "2021"
+edition = "2024"
 license = "MIT"
 repository = "https://github.com/alexlovric/hologram"
 documentation = "https://docs.rs/hologram"
@@ -18,9 +18,10 @@ test = true
 doctest = false
 
 [dependencies]
-rayon = {version = "1.10.0", optional = true}
+rayon = { version = "1.10.0", optional = true }
 ndarray = { version = "0.16", optional = true }
 ndarray-linalg = { version = "0.17", optional = true }
+faer = { version = "0.22.6", optional = true }
 
 [features]
 default = ["rayon"]  # Run without any features with --no-default-features
@@ -29,6 +30,7 @@ default = ["rayon"]  # Run without any features with --no-default-features
 rayon = ["dep:rayon"]
 openblas = ["dep:ndarray", "dep:ndarray-linalg", "ndarray-linalg/openblas-static"]
 intel-mkl = ["dep:ndarray", "dep:ndarray-linalg", "ndarray-linalg/intel-mkl-static"]
+faer = ["dep:faer"]
 
 [dev-dependencies]
 approx = "0.5.1"

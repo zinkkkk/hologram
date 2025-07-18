@@ -8,6 +8,9 @@ use ndarray::{Array1, Array2};
 #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
 use ndarray_linalg::Solve;
 
+#[cfg(feature = "faer")]
+use faer::prelude::*;
+
 /// Solves a linear system Ax = b using LU decomposition.
 ///
 /// # Arguments
@@ -310,4 +313,37 @@ pub fn ndarray_linear_solver<T: Numeric>(
         .outer_iter()
         .map(|row| T::from_flattened(row.to_vec()))
         .collect()
+}
+
+/// Solves a linear system using faer LU decomposition.
+///
+/// # Arguments
+/// * `design_matrix` - The coefficient matrix A as a 2D vector of f64 values.
+/// * `rhs` - The right-hand side vector with elements of any numeric type T.
+///
+/// # Returns
+/// * `Ok(Vec<T>)` - The solution vector x if successful.
+/// * `Err(String)` - An error message if the system cannot be solved.
+#[cfg(feature = "faer")]
+pub fn faer_linear_solver<'a, T: Numeric>(
+    design_matrix: &[Vec<f64>],
+    rhs: &[T],
+) -> Result<Vec<T>, String> {
+
+    let (m, n) = (design_matrix.first().unwrap().len(), design_matrix.len());
+    let dim = rhs.first().unwrap().to_flattened().len();
+
+    let dmf: Vec<f64> = design_matrix.iter().flatten().map(|&i| i).collect();
+    let a = MatRef::<f64>::from_column_major_slice(&dmf, m, n);
+    let mut rhs = Mat::from_fn(m, dim, |a, b| rhs.get(a).unwrap().to_flattened()[b]);
+
+    a.as_ref().partial_piv_lu().solve_adjoint_in_place(rhs.as_mut());
+    rhs = rhs.transpose().to_owned();
+
+    let mut w = Vec::with_capacity(dim * n);
+    zip!(&rhs).for_each(|unzip!(i)| {
+        w.push(*i);
+    });
+
+    Ok(w.chunks_exact(dim).map(|chunk| T::from_flattened(chunk.to_vec()).unwrap()).collect())
 }

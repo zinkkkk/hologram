@@ -6,11 +6,14 @@ use crate::{
     Interpolator,
 };
 
-#[cfg(not(any(feature = "openblas", feature = "intel-mkl")))]
+#[cfg(not(any(feature = "openblas", feature = "intel-mkl", feature = "faer")))]
 use crate::linear_algebra::lu_linear_solver;
 
 #[cfg(any(feature = "openblas", feature = "intel-mkl"))]
 use crate::linear_algebra::ndarray_linear_solver;
+
+#[cfg(feature = "faer")]
+use crate::linear_algebra::faer_linear_solver;
 
 /// Rbf model.
 #[derive(Debug, Clone)]
@@ -63,9 +66,13 @@ where
             {
                 ndarray_linear_solver(&design_matrix, &y)?
             }
-            #[cfg(not(any(feature = "openblas", feature = "intel-mkl")))]
+            #[cfg(not(any(feature = "openblas", feature = "intel-mkl", feature = "faer")))]
             {
                 lu_linear_solver(&design_matrix, &y)?
+            }
+            #[cfg(feature = "faer")]
+            {
+                faer_linear_solver(&design_matrix, &y)?
             }
         };
 

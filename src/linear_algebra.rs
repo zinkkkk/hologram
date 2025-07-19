@@ -325,7 +325,7 @@ pub fn ndarray_linear_solver<T: Numeric>(
 /// * `Ok(Vec<T>)` - The solution vector x if successful.
 /// * `Err(String)` - An error message if the system cannot be solved.
 #[cfg(feature = "faer")]
-pub fn faer_linear_solver<'a, T: Numeric>(
+pub fn faer_linear_solver<T: Numeric>(
     design_matrix: &[Vec<f64>],
     rhs: &[T],
 ) -> Result<Vec<T>, String> {
